@@ -1,0 +1,400 @@
+/*****************************************************************************************************************************
+ * Program:	Land6 Fishing Boy
+ * Purpose:	Land6 Fishing Boy side quest add the one of the favorite B&W2 feature back to B&W2 which is ability to change 
+ * your creature through out the game. This quest is inspired by land 4 fishing kid on B&W1. Once you complete this mission,
+ * it will unlock the turtle creature for you to swap whenever you want.
+ * Author:		Egerion 
+ * Version: 	1.0
+ * Date: 		September 19 2019 20:22
+******************************************************************************************************************************/
+//-------------------------------------------------Scripts---------------------------------------------------------------------
+define script FishingBoy 
+define script BuildCreature(Boy)   
+define script BuildScroll(DumbCreatureObj)
+define script SwapCreatures(DumbCreatureObj) 
+
+global Pcreature = 0
+
+
+run script FishingBoy  
+begin script FishingBoy 
+    
+    DummyFishCounter = 0
+    FishingArea = 0
+    FishCounter = 0
+    FishArea = 0
+    MyScroll = 0
+    BoysHut = 0
+    Boy = 0
+
+    LandHeight[5]
+    HeightSum[5]
+    Fish[5]
+
+    LoopAry = 0
+    PreyCounter = 0
+    FishInNet = 0
+    
+start 
+    
+    BoysHut = create with angle 300 and scale 1 HOUSE ABODE_INFO_JAPANESE_HOUSE_A at {485.70, 46.92, 1281.79}
+    disable BoysHut hurt by fire
+    disable BoysHut set on fire
+    disable BoysHut reactable
+    disable BoysHut pickup 
+    enable BoysHut indestructible
+
+    MyScroll = create highlight SILVER name "HELP_TEXT_MULTIPLAYER_SETUP_SPELL_11" remind "HELP_TEXT_MULTIPLAYER_SETUP_SPELL_11" at {BoysHut} //fishing boy 
+    ALTITUDE of MyScroll = 10 
+
+    wait until MyScroll right clicked
+    clear right clicked object
+    delete MyScroll
+
+    Boy = create CHILD GREEK_FISHERMAN at {485.70, 46.92, 1278.79} 
+    disable Boy hurt by fire
+    disable Boy set on fire
+    disable Boy reactable
+    disable Boy pickup
+    enable Boy indestructible
+    stop Boy moving
+
+    set Boy carrying CARRIED_OBJECT_FISHING_ROD
+
+    begin cinema 
+
+        set fade red 0 green 0 blue 0 time 1
+        wait 2 seconds
+        set fade in time 1
+
+        set camera position to {497.02, 60.13, 1260.48}
+        set camera focus to {Boy}
+        set camera lens 74.000 time 4 
+
+        set Boy position to {485.70, 46.92, 1281.79}
+		move Boy position to {488.70, 46.92, 1275.79}
+        wait 6 seconds 
+        start music "HELP_TEXT_FISHING_PUZZLE_01" loop 1
+
+        //say "I want to be a fisherman like my dad, instead of turtle farmer...*"
+        wait until 3 seconds
+ 
+        start music "HELP_TEXT_FISHING_PUZZLE_02" loop 1
+
+        //say "My dad said i've never be any good, mybe he's right...*"
+        wait until 3 seconds 
+
+        start music "HELP_TEXT_FISHING_PUZZLE_04" loop 1
+
+        //say "When they are all in the net, i'll be able to catch them and make my old man proud!*"
+        wait until 5 seconds 
+
+        set fade red 0 green 0 blue 0 time 1
+        wait 1 seconds
+        set fade in time 1
+
+        set camera position to {499.02, 60.13, 1260.48}
+        set camera focus to {452.83, 38.44, 1245.23}
+
+        set Boy position to {485.70, 46.92, 1268.79}
+        move Boy position to {485.70, 46.92, 1268.79}
+
+    end cinema 
+
+    set Boy carrying CARRIED_OBJECT_NONE
+
+    FishingArea = create influence at {452.83, 38.44, 1245.23} radius 30 //fishing area
+    FishingArea = create influence at {499.02, 47.13, 1260.48} radius 10 //where you place the Fish
+
+    FishArea = create visual effect VISUAL_EFFECT_AREA_TARGET at {499.02, 47.13, 1260.48} time -1
+    set FishArea colour red 255 green 0 blue 0
+    SCALE of FishArea = 1.5
+    DENSITY of FishArea = 2.0 
+    
+    while FishCounter < 5
+
+        Fish[FishCounter] = create with angle 0.0 and scale 1.0 ROCK_OBJECT ERODED_ROCK_MEDIUM at {452.83, 38.44, 1245.23}
+        ALTITUDE of Fish[FishCounter] = 6.3
+        override mesh for Fish[FishCounter] with "..\skins\s_tuna_n"
+
+        enable Fish[FishCounter] moveable
+        enable Fish[FishCounter] indestructible
+        enable Fish[FishCounter] pickup
+        disable Fish[FishCounter] can be fisted
+        disable Fish[FishCounter] set on fire
+
+        LandHeight[FishCounter] = land height at {Fish[FishCounter]}
+        HeightSum[FishCounter] = LandHeight[FishCounter] + 6.3
+
+        FishCounter++ 
+
+    end while 
+
+    begin loop
+
+        if (LoopAry >= 5)
+			LoopAry = 0
+		end if
+  
+        set Fish[LoopAry] position to {452.83, 38.44, 1245.23} + {(number from -20 to 20), (number from -20 to 20), (number from -20 to 20)} 
+        LandHeight[LoopAry] = land height at {Fish[LoopAry]}
+        ALTITUDE of Fish[LoopAry] = HeightSum[LoopAry] - LandHeight[LoopAry]
+        ANGLE of Fish[LoopAry] = (number from 0 to 360)
+        SCALE of Fish[LoopAry] = (number from 1 to 0.2)
+
+        if({Fish[LoopAry]} near {499.02, 47.13, 1260.48} radius 12)
+        
+            //if(not Fish[LoopAry] is HELD)
+
+                if(number from 0 to 2 == 0)
+                    play anim "A_P_CLAP3_LOOP" on Boy loop 1
+                elsif(number from 0 to 2 == 1)
+                    play anim "A_P_EXCITED_2" on Boy loop 1
+                elsif(number from 0 to 2 == 2)
+                    play anim "A_P_CROWD_WON_2" on Boy loop 1
+                end if 
+
+                play string sound "REWARD6" pitch 1.2
+                delete Fish[LoopAry]
+                PreyCounter++
+
+            //end if 
+
+        end if 
+
+        LoopAry++ 
+        until (PreyCounter == 5)
+
+    end loop 
+
+    wait 2 seconds 
+    set fade red 0 green 0 blue 0 time 1
+    wait 2 seconds
+    
+    delete FishingArea 
+    delete FishArea
+
+    run script BuildCreature(Boy)   
+
+end script FishingBoy 
+
+
+begin script BuildCreature(Boy)   
+
+    DumbCreature = 0
+    AntiInfluence = 0
+
+start   
+
+    begin cinema 
+
+        set fade in time 1
+        /*
+        set camera position to {507.02, 60.13, 1260.48}
+        set camera focus to {DumbCreature}
+
+        //set DumbCreature focus to {camera position}
+
+        set Boy focus to {DumbCreature}
+        set Boy position to {507.02, 60.13, 1260.48}
+        move Boy position to {504.02, 60.13, 1260.48}
+
+        start music "HELP_TEXT_FISHING_PUZZLE_04" loop 1
+        wait 4 seconds
+        */
+        set camera position to {501.02, 60.13, 1255.48}
+        set camera focus to {Boy} 
+
+        set Boy position to {488.70, 46.92, 1275.79}
+		move Boy position to {488.70, 46.92, 1275.79}
+        play anim "A_P_EXCITED_2" on Boy loop 1
+
+        start music "HELP_TEXT_FISHING_PUZZLE_06" loop 1
+
+        //say "Whoa! I cought alot! My father will be so impressed!*"
+        wait until 4 seconds 
+
+        DumbCreature = create CREATURE constant 4 at {499.02, 47.13, 1260.48}
+        set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT 0 time 0
+        set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS 0.4 time 0
+        set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH 0.2 time 0
+        set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE 0 time 0
+        PLAYER of DumbCreature = 0
+
+        AntiInfluence = create anti influence on DumbCreature radius 10
+
+        move camera position to {501.02, 60.13, 1245.48} time 6
+        wait 2 seconds 
+        play string sound "SCRIPT13_REWARDSTING"
+        wait 3 seconds 
+
+        start music "HELP_TEXT_FISHING_PUZZLE_14" loop 1
+        wait 1 seconds 
+        
+        //say "Here, have my favortive turtle as thanks for all your help.*"
+        play anim C_INDIVIDUAL_FRIENDLY_WAVE on DumbCreature loop 1
+        wait until 4 seconds 
+   
+    end cinema 
+
+    run background script BuildScroll(DumbCreature)
+
+    wait 2 seconds 
+    start music "HELP_TEXT_CREATURE_BREEDER_09" loop 1
+    move Boy position to {485.70, 46.92, 1281.79}
+    wait 10 seconds 
+    set Boy position to {485.70, 46.92, 1281.79}
+    delete Boy 
+
+end script BuildCreature
+
+
+begin script BuildScroll(DumbCreatureObj)
+
+    MyScroll = 0
+
+start 
+
+    disable tooltip on creature DumbCreatureObj
+    disable DumbCreatureObj interactable
+    enable DumbCreatureObj indestructible
+
+    if(get distance from {DumbCreatureObj} to {499.02, 47.13, 1260.48} >= 5)
+        move DumbCreatureObj position to {499.02, 47.13, 1260.48}
+        wait until creature DumbCreatureObj finished script action
+    end if 
+    
+    MyScroll = create highlight SILVER name "HELP_TEXT_MULTIPLAYER_TAUNTS_EA_09" remind "HELP_TEXT_MULTIPLAYER_TAUNTS_EA_09" at {DumbCreatureObj} //creature swapper
+    ALTITUDE of MyScroll = 6.0
+
+    force DumbCreatureObj CREATURE_IDLE DumbCreatureObj
+
+    begin loop      
+        Pcreature = get player 0 creature  
+
+        if(get distance from camera position to {DumbCreatureObj} <= 35)    
+            set DumbCreatureObj focus to camera position
+        end if 
+
+        if(MyScroll right clicked) and (get distance from {Pcreature} to {DumbCreatureObj} > 20)                            
+            begin dialogue 
+                if(number from 0 to 2 == 0)
+                    //: you'll need to bring our creature boss 
+                    start music "HELP_TEXT_CREATURE_BREEDER_10" loop 1 
+                    wait 2 seconds 
+                elsif(number from 0 to 2 == 1)
+                    //: swap your creature with this one if you want 
+                    start music "HELP_TEXT_CREATURE_BREEDER_09" loop 1
+                    eject evil spirit
+                    wait 0.2 seconds
+                    make evil spirit fly across 0.25 down 0.2
+                    make evil spirit point at {DumbCreatureObj}
+                    wait 2.5 seconds
+                    stop evil spirit pointing
+                elsif(number from 0 to 2 == 2)
+                    //: are you sure you wan to use this creature...
+                    start music "HELP_TEXT_CREATURE_SWAP_CONFIRM_03" loop 1
+                    eject good spirit
+                    wait 1 seconds
+                    make good spirit point at {DumbCreatureObj} + {0,5,0}
+                    wait 2 seconds
+                    stop good spirit pointing
+                    wait 1 seconds 
+                end if 
+
+                clear right clicked object
+            end dialogue
+        end if 
+
+        until(MyScroll right clicked) and (get distance from {Pcreature} to {DumbCreatureObj} <= 20)
+    end loop 
+    clear right clicked object
+    delete MyScroll
+
+    run script SwapCreatures(DumbCreatureObj) 
+
+end script BuildScroll
+
+
+begin script SwapCreatures(DumbCreatureObj)
+
+    //stats of player creature 
+    C_Alignment = 0
+    C_Fatness = 0
+    C_Stregth = 0
+    C_Size = 0
+
+    SwapFx[2]
+
+start  
+
+    Pcreature = get player 0 creature
+
+    if(get held by Pcreature exists)
+        force Pcreature CREATURE_PUT_DOWN Pcreature
+        wait until creature Pcreature finished script action
+    end if 
+
+    begin cinema
+
+        force Pcreature CREATURE_IDLE Pcreature
+        wait 1.0 seconds 
+
+        start music "G_CreatureSwap_01" loop 1
+        
+		set camera focus to {DumbCreatureObj}
+        move camera to face DumbCreatureObj distance 25 time 6
+		set camera lens 64.000 time 6 
+
+        detach Pcreature leash
+
+        C_Alignment = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT
+        C_Fatness = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS
+        C_Stregth = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH
+        C_Size = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE
+        
+        SwapFx[0] = create visual effect VISUAL_EFFECT_CREATURE_RESURRECT at {DumbCreatureObj} time 3
+        SCALE of SwapFx[0] = C_Size*0.45
+        set SwapFx[0] colour red 0 green 207 blue 0
+  
+        SwapFx[1] = create visual effect VISUAL_EFFECT_CREATURE_RESURRECT at {Pcreature} time 3
+        SCALE of SwapFx[1] = C_Size*0.45
+        set SwapFx[1] colour red 0 green 207 blue 0
+
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT C_Alignment time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS C_Fatness time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH C_Stregth time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE C_Size time 6
+
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT 0 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS 0.4 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH 0 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE 0 time 6
+		
+        play anim C_INDIVIDUAL_FRIGHTENED on DumbCreatureObj loop 1 
+        play anim C_INDIVIDUAL_FRIGHTENED on Pcreature loop 1 
+        snap creature DumbCreatureObj focus to {Pcreature}
+        snap creature Pcreature focus to {DumbCreatureObj}
+        wait until creature DumbCreatureObj finished script action
+
+        PLAYER of Pcreature = 0
+        set player 0 creature to DumbCreatureObj
+        release DumbCreatureObj
+        save my_creature
+
+        enable tooltip on creature DumbCreatureObj
+        enable DumbCreatureObj interactable
+        disable DumbCreatureObj indestructible
+
+        wait 6 seconds 
+    end cinema
+
+    if(number from 0 to 1 == 0)
+        wait 0.5 seconds 
+        //: great boss, if you want your old creature back, just return here later
+        start music "HELP_TEXT_CREATURE_BREEDER_11" loop 1 
+    end if 
+
+    run script BuildScroll(Pcreature)
+
+end script SwapCreatures

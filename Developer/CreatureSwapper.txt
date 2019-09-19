@@ -1,0 +1,204 @@
+
+define script BuildCreature
+define script BuildScroll(DumbCreatureObj)
+define script SwapCreatures(DumbCreatureObj) 
+
+//creature types 
+/*
+CREATURE_TYPE_APE     = 0                                                          
+CREATURE_TYPE_COW     = 1                                                       
+CREATURE_TYPE_TIGER   = 2                                                    
+CREATURE_TYPE_WOLF    = 3                                                     
+CREATURE_TYPE_LION    = 4                                                   
+CREATURE_TYPE_GORILLA = 5                                                    
+*/
+global CreatureType = 4 //you can switch the creature types from here 
+
+//creature position 
+define xPos = 856.647
+define yPos = 55.252
+define zPos = 727.994
+
+global Pcreature = 0
+
+run script BuildCreature
+begin script BuildCreature   
+
+    DumbCreature = 0
+    AntiInfluence = 0
+
+start   
+
+    DumbCreature = create CREATURE constant CreatureType at {xPos, yPos, zPos}
+    set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT 0 time 0
+    set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS 0.4 time 0
+    set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH 0.2 time 0
+    set creature DumbCreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE 0 time 0
+    PLAYER of DumbCreature = 0
+
+    AntiInfluence = create anti influence on DumbCreature radius 10
+
+    run script BuildScroll(DumbCreature)
+
+end script BuildCreature
+
+
+begin script BuildScroll(DumbCreatureObj)
+
+    MyScroll = 0
+
+start 
+
+    disable tooltip on creature DumbCreatureObj
+    disable DumbCreatureObj interactable
+    enable DumbCreatureObj indestructible
+
+    if(get distance from {DumbCreatureObj} to {xPos, yPos, zPos} >= 5)
+        move DumbCreatureObj position to {xPos, yPos, zPos}
+        wait until creature DumbCreatureObj finished script action
+    end if 
+    
+    MyScroll = create highlight SILVER name "HELP_TEXT_MULTIPLAYER_TAUNTS_EA_09" remind "HELP_TEXT_MULTIPLAYER_TAUNTS_EA_09" at {DumbCreatureObj} //creature swapper
+    ALTITUDE of MyScroll = 6.0
+
+    force DumbCreatureObj CREATURE_IDLE DumbCreatureObj
+
+    begin loop      
+        Pcreature = get player 0 creature  
+
+        if(get distance from camera position to {DumbCreatureObj} <= 35)    
+            set DumbCreatureObj focus to camera position
+        end if 
+        /*     
+        if(get distance from {Pcreature} to {DumbCreatureObj} <= 200)      
+            set Pcreature only desire CREATURE_DESIRE_TO_IDLE_AROUND_WITH_PLAYER
+        elsif(get distance from {Pcreature} to {DumbCreatureObj} >= 200)   
+            set Pcreature disable only desire  
+        end if   
+        */
+        if(MyScroll right clicked) and (get distance from {Pcreature} to {DumbCreatureObj} > 20)                            
+            begin dialogue 
+                if(number from 0 to 2 == 0)
+                    //: you'll need to bring our creature boss 
+                    start music "HELP_TEXT_CREATURE_BREEDER_10" loop 1 
+                    wait 2 seconds 
+                elsif(number from 0 to 2 == 1)
+                    //: swap your creature with this one if you want 
+                    start music "HELP_TEXT_CREATURE_BREEDER_09" loop 1
+                    eject evil spirit
+                    wait 0.2 seconds
+                    make evil spirit fly across 0.25 down 0.2
+                    make evil spirit point at {DumbCreatureObj}
+                    wait 2.5 seconds
+                    stop evil spirit pointing
+                elsif(number from 0 to 2 == 2)
+                    //: are you sure you wan to use this creature...
+                    start music "HELP_TEXT_CREATURE_SWAP_CONFIRM_03" loop 1
+                    eject good spirit
+                    wait 1 seconds
+                    make good spirit point at {DumbCreatureObj} + {0,5,0}
+                    wait 2 seconds
+                    stop good spirit pointing
+                    wait 1 seconds 
+                end if 
+
+                clear right clicked object
+            end dialogue
+        end if 
+
+        until(MyScroll right clicked) and (get distance from {Pcreature} to {DumbCreatureObj} <= 20)
+    end loop 
+    clear right clicked object
+    delete MyScroll
+    //: original B&W 1 scroll clicked sound 
+    //start music "G_ClickOnScroll_01" loop 1 
+    //wait 2 seconds 
+
+    run script SwapCreatures(DumbCreatureObj) 
+
+end script BuildScroll
+
+
+begin script SwapCreatures(DumbCreatureObj)
+
+    //stats of player creature 
+    C_Alignment = 0
+    C_Fatness = 0
+    C_Stregth = 0
+    C_Size = 0
+
+    SwapFx[2]
+
+start  
+
+    Pcreature = get player 0 creature
+
+    if(get held by Pcreature exists)
+        force Pcreature CREATURE_PUT_DOWN Pcreature
+        wait until creature Pcreature finished script action
+    end if 
+
+    begin cinema
+
+        force Pcreature CREATURE_IDLE Pcreature
+        wait 1.0 seconds 
+
+        start music "G_CreatureSwap_01" loop 1
+        wait 0.2 seconds 
+        
+		set camera focus to {DumbCreatureObj}
+        move camera to face DumbCreatureObj distance 25 time 6
+		set camera lens 64.000 time 6 
+
+        detach Pcreature leash
+
+        C_Alignment = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT
+        C_Fatness = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS
+        C_Stregth = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH
+        C_Size = get creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE
+        
+        SwapFx[0] = create visual effect VISUAL_EFFECT_CREATURE_RESURRECT at {DumbCreatureObj} time 3
+        SCALE of SwapFx[0] = C_Size*0.45
+        set SwapFx[0] colour red 0 green 207 blue 0
+  
+        SwapFx[1] = create visual effect VISUAL_EFFECT_CREATURE_RESURRECT at {Pcreature} time 3
+        SCALE of SwapFx[1] = C_Size*0.45
+        set SwapFx[1] colour red 0 green 207 blue 0
+
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT C_Alignment time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS C_Fatness time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH C_Stregth time 6
+        set creature DumbCreatureObj CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE C_Size time 6
+
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_ALIGNMENT 0 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_FATNESS 0.4 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_STRENGTH 0 time 6
+        set creature Pcreature CREATURE_SCRIPT_TRANSITIONAL_ATTRIBUTE_TYPE_SIZE 0 time 6
+		
+        play anim C_INDIVIDUAL_FRIGHTENED on DumbCreatureObj loop 1 
+        play anim C_INDIVIDUAL_FRIGHTENED on Pcreature loop 1 
+        snap creature DumbCreatureObj focus to {Pcreature}
+        snap creature Pcreature focus to {DumbCreatureObj}
+        wait until creature DumbCreatureObj finished script action
+
+        PLAYER of Pcreature = 0
+        set player 0 creature to DumbCreatureObj
+        release DumbCreatureObj
+        save my_creature
+
+        enable tooltip on creature DumbCreatureObj
+        enable DumbCreatureObj interactable
+        disable DumbCreatureObj indestructible
+
+        wait 5 seconds 
+    end cinema
+
+    if(number from 0 to 1 == 0)
+        wait 0.5 seconds 
+        //: great boss, if you want your old creature back, just return here later
+        start music "HELP_TEXT_CREATURE_BREEDER_11" loop 1 
+    end if 
+
+    run script BuildScroll(Pcreature)
+
+end script SwapCreatures
